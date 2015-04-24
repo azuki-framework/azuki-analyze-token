@@ -3,6 +3,7 @@ package org.azkfw.analyze.token;
 public class Token {
 
 	private int index;
+
 	private String token;
 
 	public Token(final int index, final String token) {

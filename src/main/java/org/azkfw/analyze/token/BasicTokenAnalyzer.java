@@ -8,7 +8,7 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 	private static final int PHASE_STRING = 1;
 	private static final int PHASE_MULTI_COMMENT = 2;
 	private static final int PHASE_LINE_COMMENT = 3;
-
+	
 	@Override
 	protected final void doAnalyze(final String string) {
 		StringBuilder buffer = new StringBuilder();
@@ -27,7 +27,7 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 				sz = isStringEscape(i, string, matchString);
 				if (0 != sz) {
 					buffer.append(string.substring(i, i + sz));
-					
+
 					i += sz - 1;
 					continue;
 				}
@@ -35,13 +35,13 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 				sz = isStringSuffix(i, string, matchString);
 				if (0 != sz) {
 					buffer.append(string.substring(i, i + sz));
-					addToken(lastIndex, buffer.toString());
-					
+					addToken(lastIndex, buffer.toString(), phase);
+
 					phase = PHASE_NONE;
-					
+
 					buffer = new StringBuilder();
 					lastIndex = i + sz;
-					
+
 					i += sz - 1;
 					continue;
 				}
@@ -56,13 +56,13 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 				sz = isMultiCommentSuffix(i, string, matchString);
 				if (0 != sz) {
 					buffer.append(string.substring(i, i + sz));
-					addToken(lastIndex, buffer.toString());
-					
+					addToken(new CommentToken(lastIndex, buffer.toString()));
+
 					phase = PHASE_NONE;
-					
+
 					buffer = new StringBuilder();
 					lastIndex = i + sz;
-					
+
 					i += sz - 1;
 					continue;
 				}
@@ -76,14 +76,14 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 
 				sz = isLineCommentSuffix(i, string, matchString);
 				if (0 != sz) {
-					addToken(lastIndex, buffer.toString());
-					
+					addToken(new CommentToken(lastIndex, buffer.toString()));
+
 					phase = PHASE_NONE;
 
 					buffer = new StringBuilder();
-					lastIndex = 
-					
-					i += sz -1;
+					lastIndex = i;
+
+					i += -1;
 					continue;
 				}
 
@@ -97,7 +97,7 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 				sz = isMultiCommentPrefix(i, string);
 				if (0 != sz) {
 					if (0 < buffer.length()) {
-						addToken(lastIndex, buffer.toString());
+						addToken(lastIndex, buffer.toString(), phase);
 						buffer = new StringBuilder();
 					}
 					lastIndex = i;
@@ -111,7 +111,7 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 				sz = isLineCommentPrefix(i, string);
 				if (0 != sz) {
 					if (0 < buffer.length()) {
-						addToken(lastIndex, buffer.toString());
+						addToken(lastIndex, buffer.toString(), phase);
 						buffer = new StringBuilder();
 					}
 					lastIndex = i;
@@ -125,15 +125,33 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 				sz = isStringPrefix(i, string);
 				if (0 != sz) {
 					if (0 < buffer.length()) {
-						addToken(lastIndex, buffer.toString());
+						addToken(lastIndex, buffer.toString(), phase);
 						buffer = new StringBuilder();
 					}
-					
+
 					lastIndex = i;
 					matchString = string.substring(i, i + sz);
 					buffer.append(matchString);
 					phase = PHASE_STRING;
-					
+
+					i += sz - 1;
+					continue;
+				}
+
+				sz = isSpace(i, string);
+				if (0 != sz) {
+					if (0 < buffer.length()) {
+						addToken(lastIndex, buffer.toString(), phase);
+						buffer = new StringBuilder();
+					}
+
+					lastIndex = i;
+					buffer.append(string.substring(i, i + sz));
+					addToken(new SpaceToken(lastIndex, buffer.toString()));
+
+					buffer = new StringBuilder();
+					lastIndex = i + sz;
+
 					i += sz - 1;
 					continue;
 				}
@@ -141,17 +159,17 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 				sz = isReserved(i, string);
 				if (0 != sz) {
 					if (0 < buffer.length()) {
-						addToken(lastIndex, buffer.toString());
+						addToken(lastIndex, buffer.toString(), phase);
 						buffer = new StringBuilder();
 					}
-					
+
 					lastIndex = i;
 					buffer.append(string.substring(i, i + sz));
-					addToken(lastIndex, buffer.toString());
-					
+					addToken(new ReservedToken(lastIndex, buffer.toString()));
+
 					buffer = new StringBuilder();
 					lastIndex = i + sz;
-					
+
 					i += sz - 1;
 					continue;
 				}
@@ -163,19 +181,39 @@ public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 
 		}
 		if (0 < buffer.length()) {
-			addToken(lastIndex, buffer.toString());
+			addToken(lastIndex, buffer.toString(), phase);
 		}
 
 	}
 
-	private void addToken(final int index, final String token) {
-		Token t = new Token(index, token);
-		
-		System.out.println(String.format("[%3d:%3d] %s", index, token.length(), token ));
+	private void addToken(final int index, final String value, final int phase) {
+		switch (phase) {
+		case PHASE_STRING:
+			addToken(new StringToken(index, value));
+			break;
+		case PHASE_LINE_COMMENT:
+		case PHASE_MULTI_COMMENT:
+			addToken(new CommentToken(index, value));
+			break;
+		default:
+			addToken(new Token(index, value));
+			break;
+		}
+	}
+
+	protected int isSpace(final int index, final String string) {
+		final String[] strings = { "\r", "\n", " ", "\t" };
+		for (String match : strings) {
+			int sz = isIndexMatch(string, index, match);
+			if (0 < sz) {
+				return sz;
+			}
+		}
+		return 0;
 	}
 
 	protected int isReserved(final int index, final String string) {
-		final String[] strings = { "\r", "\n", " ", ".", ",", "(", ")", "=", "<", ">" };
+		final String[] strings = { ".", ",", "(", ")", "=", "<", ">" };
 		for (String match : strings) {
 			int sz = isIndexMatch(string, index, match);
 			if (0 < sz) {
