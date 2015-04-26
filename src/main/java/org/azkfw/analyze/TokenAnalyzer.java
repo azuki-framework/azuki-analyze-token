@@ -15,11 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.azkfw.analyze.token;
+package org.azkfw.analyze;
 
-public class ReservedToken extends Token {
+import java.util.List;
 
-	public ReservedToken(final int index, final String token) {
-		super(index, token);
-	}
+import org.azkfw.analyze.token.Token;
+
+/**
+ * このインターフェースは、トークン解析機能を定義するためのインターフェースです。
+ * 
+ * @author Kawakicchi
+ */
+public interface TokenAnalyzer {
+
+	/**
+	 * 解析を行う。
+	 * 
+	 * @param string 文字列
+	 */
+	public void analyze(final String string);
+
+	/**
+	 * トークンリストを取得する。
+	 * 
+	 * @return トークン
+	 */
+	public List<Token> getTokenList();
 }

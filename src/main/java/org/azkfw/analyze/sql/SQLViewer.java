@@ -1,10 +1,12 @@
-package org.azkfw.analyze.token.sql;
+package org.azkfw.analyze.sql;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -23,11 +26,12 @@ import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
+import org.azkfw.analyze.TokenAnalyzer;
 import org.azkfw.analyze.token.CommentToken;
 import org.azkfw.analyze.token.SpaceToken;
 import org.azkfw.analyze.token.StringToken;
 import org.azkfw.analyze.token.Token;
-import org.azkfw.analyze.token.TokenAnalyzer;
+import org.azkfw.util.StringUtility;
 
 public class SQLViewer {
 
@@ -35,7 +39,9 @@ public class SQLViewer {
 
 		InputStreamReader reader = null;
 		try {
-			reader = new InputStreamReader(new FileInputStream(new File(args[0])), "Windows-31J");
+			// reader = new InputStreamReader(new FileInputStream(new
+			// File(args[0])), "Windows-31J");
+			reader = new InputStreamReader(new FileInputStream(new File(args[0])), "UTF-8");
 			char[] buffer = new char[1024];
 			StringBuilder s = new StringBuilder();
 			int readSize = -1;
@@ -82,22 +88,8 @@ public class SQLViewer {
 			setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
 			keywords = new HashSet<String>();
-			keywords.add("SELECT");
-			keywords.add("FROM");
-			keywords.add("WHERE");
-			keywords.add("ORDER");
-			keywords.add("GROUP");
-			keywords.add("BY");
-			keywords.add("AS");
-			keywords.add("AND");
-			keywords.add("OR");
-			keywords.add("IS");
-			keywords.add("LIKE");
-			keywords.add("SYSDATE");
-			keywords.add("EXISTS");
-			keywords.add("DUAL");
-			keywords.add("HAVING");
-			keywords.add("NULL");
+			read("/sql01.txt");
+			read("/sql02.txt");
 
 			functions = new HashSet<String>();
 			functions.add("MIN");
@@ -131,6 +123,7 @@ public class SQLViewer {
 
 			style = new DefaultStyledDocument();
 			text.setStyledDocument(style);
+			text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 			scroll = new JScrollPane(text);
 
 			add(scroll);
@@ -145,7 +138,31 @@ public class SQLViewer {
 				}
 			});
 
-			setBounds(10, 10, 800, 800);
+			setBounds(10, 10, 500, 500);
+		}
+
+		private void read(final String file) {
+
+			BufferedReader reader = null;
+			try {
+				reader = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(file), "UTF-8"));
+				String line = null;
+				while (null != (line = reader.readLine())) {
+					if (StringUtility.isNotEmpty(line)) {
+						keywords.add(line);
+					}
+				}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			} finally {
+				if (null != reader) {
+					try {
+						reader.close();
+					} catch (IOException ex) {
+						ex.printStackTrace();
+					}
+				}
+			}
 		}
 
 		public void set(final String sql, final List<Token> tokens) {
@@ -164,6 +181,9 @@ public class SQLViewer {
 
 			MutableAttributeSet atrString = new SimpleAttributeSet();
 			StyleConstants.setForeground(atrString, new Color(200, 0, 0));
+			
+			MutableAttributeSet atrNumber = new SimpleAttributeSet();
+			StyleConstants.setForeground(atrNumber, new Color(200, 0, 0));
 
 			for (Token token : tokens) {
 				if (!(token instanceof SpaceToken)) {
@@ -178,9 +198,16 @@ public class SQLViewer {
 					style.setCharacterAttributes(token.getIndex(), token.getToken().length(), atrComment, true);
 				} else if (isString(token)) {
 					style.setCharacterAttributes(token.getIndex(), token.getToken().length(), atrString, true);
+				} else if (isNumber(token)) {
+					style.setCharacterAttributes(token.getIndex(), token.getToken().length(), atrNumber, true);
 				}
 			}
 
+		}
+		
+		private Pattern PTN = Pattern.compile("^[0-9]+$");
+		private boolean isNumber(final Token token) {
+			return PTN.matcher(token.getToken()).matches();
 		}
 
 		private boolean isString(final Token token) {

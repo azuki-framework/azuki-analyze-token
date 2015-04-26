@@ -1,4 +1,4 @@
-azuki-base
+azuki-analyze-token
 ==========
 
-Azuki Framework base library
+Azuki Framework token analyze library
