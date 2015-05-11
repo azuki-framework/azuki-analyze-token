@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 import javax.swing.JTextPane;
 import javax.swing.JViewport;
 import javax.swing.plaf.TextUI;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
