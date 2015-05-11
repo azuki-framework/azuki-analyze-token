@@ -19,6 +19,11 @@ package org.azkfw.analyze.sql;
 
 import org.azkfw.analyze.BasicTokenAnalyzer;
 
+/**
+ * このクラスは、SQL文をトークン解析するクラスです。
+ * 
+ * @author Kawakicchi
+ */
 public class SQLTokenAnalyzer extends BasicTokenAnalyzer {
 
 	@Override

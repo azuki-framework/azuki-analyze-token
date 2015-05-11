@@ -42,30 +42,12 @@ public abstract class AbstractTokenAnalyzer extends LoggingObject implements Tok
 
 	@Override
 	public final void analyze(final String string) {
-		doAnalyzeBefore();
 		doAnalyze(string);
-		doAnalyzeAfter(tokens);
 	}
 
 	@Override
 	public final List<Token> getTokenList() {
 		return tokens;
-	}
-
-	/**
-	 * 解析前に実行される。
-	 */
-	protected void doAnalyzeBefore() {
-
-	}
-
-	/**
-	 * 解析後に実行される。
-	 * 
-	 * @param tokens トークンリスト
-	 */
-	protected void doAnalyzeAfter(final List<Token> tokens) {
-
 	}
 
 	/**

@@ -24,6 +24,11 @@ import org.azkfw.analyze.token.StringToken;
 import org.azkfw.analyze.token.Token;
 import org.azkfw.util.StringUtility;
 
+/**
+ * このクラスは、基本的なトークン解析機能を実装したクラスです。
+ * 
+ * @author Kawakicchi
+ */
 public class BasicTokenAnalyzer extends AbstractTokenAnalyzer {
 
 	private static final int PHASE_NONE = 0;
